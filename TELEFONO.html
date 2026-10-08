@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cotizador Móvil - PROTEKTA</title>
+  <link rel="icon" type="image/png" href="imagen/icono.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #1b365d;       /* Azul institucional PROTEKTA */
+      --secondary: #2563eb;     /* Azul acento principal */
+      --accent: #1e40af;        /* Azul profundo para acentos */
+      --bg-main: #f0f4f8;       /* Fondo general gris-azulado limpio */
+      --bg-card: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --border-color: #cbd5e1;
+      --danger: #ef4444;
+      --success: #10b981;
+      --input-bg: #ffffff;
+      --uploader-bg: #f8fafc;
+      --shadow-subtle: 0 4px 6px -1px rgba(27, 54, 93, 0.1), 0 2px 4px -1px rgba(27, 54, 93, 0.06);
+    }
+
+    [data-theme="dark"] {
+      --primary: #60a5fa;
+      --secondary: #3b82f6;
+      --accent: #60a5fa;
+      --bg-main: #0b0f19;
+      --bg-card: #131b2e;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-color: #1e293b;
+      --danger: #f87171;
+      --success: #34d399;
+      --input-bg: #0b0f19;
+      --uploader-bg: #131b2e;
+      --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-main); color: var(--text-primary); padding: 12px; font-size: 14px; transition: background-color 0.3s ease, color 0.3s ease; }
+
+    .container { 
+      max-width: 100%; 
+      margin: 0 auto; 
+      background: var(--bg-card); 
+      padding: 16px; 
+      border-radius: 14px; 
+      box-shadow: var(--shadow-subtle); 
+      border: 1px solid var(--border-color);
+    }
+
+    /* Barra de Gestión Optimizada para Móvil (Grid de Botones) */
+    .management-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .btn { 
+      padding: 10px 6px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 700; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      gap: 4px; 
+      font-size: 0.7rem; 
+      transition: all 0.2s ease; 
+    }
+    .btn i { font-size: 1rem; }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-save { background-color: var(--success); color: #fff; }
+    .btn-history { background-color: #475569; color: #fff; }
+    .btn-catalog { background-color: #7c3aed; color: #fff; }
+    .btn-theme { background-color: var(--border-color); color: var(--text-primary); }
+    .btn-excel { background-color: #0d9488; color: #fff; }
+    .btn-backup { background-color: #3b82f6; color: #fff; }
+    .btn-whatsapp { background-color: #059669; color: #fff; }
+    .btn-add-new { background-color: var(--secondary); color: #fff; }
+
+    /* Encabezado con Logotipo Local */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 14px;
+      margin-bottom: 15px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(27, 54, 93, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+      padding: 10px 14px;
+      border-radius: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .logo-img {
+      max-height: 48px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .brand-info h1 {
+      color: var(--primary);
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-info p {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .quote-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--uploader-bg);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .quote-title h2 { font-size: 1.05rem; color: var(--primary); font-weight: 800; }
+
+    /* Datos del Cliente */
+    .form-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label { font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); }
+    .input-group input, .input-group select { 
+      padding: 10px; 
+      border: 1px solid var(--border-color); 
+      border-radius: 8px; 
+      font-size: 0.9rem; 
+      background-color: var(--input-bg);
+      color: var(--text-primary);
+    }
+
+    /* Conceptos en Tarjetas Móviles */
+    .mobile-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .item-card {
+      background: var(--uploader-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .item-card select, .item-card input.desc {
+      width: 100%;
+      padding: 9px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .item-grid-calc {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .item-grid-calc input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .item-total-text {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-align: right;
+    }
+
+    .btn-remove-card {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .btn-add-row {
+      width: 100%;
+      background-color: var(--secondary);
+      color: white;
+      padding: 11px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Totales y Notas */
+    .totals-container { background: var(--uploader-bg); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.85rem; color: var(--text-secondary); }
+    .totals-row.final { font-size: 1.15rem; font-weight: 900; color: var(--primary); border-top: 2px solid var(--border-color); margin-top: 8px; padding-top: 8px; }
+
+    .notes-box { font-size: 0.72rem; color: var(--text-secondary); margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 8px; }
+
+    .btn-print { background-color: var(--primary); color: #fff; width: 100%; padding: 13px; border-radius: 8px; border: none; font-size: 1rem; font-weight: 800; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+    /* Modales */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      z-index: 1000;
+      align-items: flex-end;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      padding: 20px 16px;
+      border-radius: 18px 18px 0 0;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-top: 2px solid var(--secondary);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .modal-header h3 { color: var(--primary); font-size: 1.15rem; font-weight: 800; }
+    .close-modal { background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; }
+
+    .list-item-card {
+      background: var(--uploader-bg);
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .backup-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .backup-box { background: var(--uploader-bg); padding: 14px; border-radius: 10px; border: 1px dashed var(--secondary); text-align: center; }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; border: none; padding: 0; }
+      .management-bar, .btn-add-row, .btn-print, .btn-remove-card { display: none !important; }
+      input, select { border: none !important; background: transparent !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Barra de Acciones Móvil -->
+  <div class="management-bar">
+    <button class="btn btn-save" onclick="guardarCotizacion()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+    <button class="btn btn-history" onclick="abrirHistorial()"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+    <button class="btn btn-catalog" onclick="abrirCatalogo()"><i class="fa-solid fa-boxes-stacked"></i> Catálogo</button>
+    <button class="btn btn-theme" onclick="toggleTheme()" id="themeToggleBtn"><i class="fa-solid fa-moon"></i> Tema</button>
+    <button class="btn btn-excel" onclick="exportarExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+    <button class="btn btn-whatsapp" onclick="enviarWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="btn btn-backup" onclick="abrirRespaldoModal()"><i class="fa-solid fa-database"></i> Respaldos</button>
+    <button class="btn btn-add-new" onclick="nuevaCotizacion()"><i class="fa-solid fa-plus"></i> Nuevo</button>
+  </div>
+
+  <!-- Encabezado con Logotipo Local -->
+  <div class="brand-header">
+    <div class="logo-container">
+      <img src="imagen/icono.png" alt="Logo PROTEKTA" class="logo-img" onerror="this.src='https://via.placeholder.com/150x50?text=PROTEKTA'">
+      <div class="brand-info">
+        <h1>PROTEKTA</h1>
+        <p>Sistemas de Seguridad & Smart Home</p>
+      </div>
+    </div>
+    <div class="quote-title">
+      <h2>PRESUPUESTO OFICIAL</h2>
+      <span id="quoteFolioDisplay" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Folio: Nuevo</span>
+    </div>
+  </div>
+
+  <!-- Datos del Cliente -->
+  <div class="form-section">
+    <div class="input-group">
+      <label>Cliente / Empresa</label>
+      <input type="text" id="clientName" placeholder="Nombre del cliente" oninput="actualizarFolioDinamico()">
+    </div>
+    <div class="input-group">
+      <label>WhatsApp / Teléfono</label>
+      <input type="tel" id="clientPhone" placeholder="Ej. 6871234567">
+    </div>
+    <div class="input-group">
+      <label>Fecha</label>
+      <input type="date" id="quoteDate" onchange="actualizarFolioDinamico()">
+    </div>
+  </div>
+
+  <!-- Lista de Conceptos Estilo Tarjetas Móviles -->
+  <div id="mobileItemsContainer" class="mobile-items-container">
+    <!-- Se generan por JS -->
+  </div>
+
+  <button class="btn-add-row" onclick="addRow()"><i class="fa-solid fa-plus"></i> Agregar Concepto</button>
+
+  <!-- Totales -->
+  <div class="totals-container">
+    <div class="totals-row">
+      <span>Subtotal:</span>
+      <span id="subtotal">$0.00</span>
+    </div>
+    <div class="totals-row">
+      <span>IVA / Impuestos (%):</span>
+      <input type="number" id="taxRate" value="16" min="0" style="width: 55px; text-align: right; padding: 2px; font-size: 0.85rem;" oninput="calculateTotals()">
+    </div>
+    <div class="totals-row">
+      <span>Impuestos:</span>
+      <span id="taxAmount">$0.00</span>
+    </div>
+    <div class="totals-row final">
+      <span>Total:</span>
+      <span id="totalFinal">$0.00</span>
+    </div>
+
+    <div class="notes-box">
+      <strong>Condiciones:</strong> Válido por 15 días. Anticipo del 50% para iniciar instalación. Facturación fiscal disponible.
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="imprimirCotizacion()"><i class="fa-solid fa-file-pdf"></i> Generar PDF / Imprimir</button>
+</div>
+
+<!-- MODAL: CATÁLOGO -->
+<div id="catalogModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Catálogo de Servicios PROTEKTA</h3>
+      <button class="close-modal" onclick="cerrarCatalogo()">&times;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+      <input type="text" id="newCatDesc" placeholder="Nombre del servicio o equipo" style="padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; background:var(--input-bg); color:var(--text-primary); font-size:0.85rem;">
+      <input type="number" id="newCatPrice" placeholder="Precio $" step="0.01" style="padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; background:var(--input-bg); color:var(--text-primary); font-size:0.85rem;">
+      <button class="btn btn-add-new" style="padding: 10px;" onclick="agregarAlCatalogo()"><i class="fa-solid fa-plus"></i> Añadir al Catálogo</button>
+    </div>
+    <div id="catalogListContainer"></div>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL -->
+<div id="historyModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Cotizaciones Guardadas</h3>
+      <button class="close-modal" onclick="cerrarHistorial()">&times;</button>
+    </div>
+    <div id="historyListContainer"></div>
+  </div>
+</div>
+
+<!-- MODAL: RESPALDOS -->
+<div id="backupModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Respaldos JSON</h3>
+      <button class="close-modal" onclick="cerrarRespaldoModal()">&times;</button>
+    </div>
+    <div class="backup-grid">
+      <div class="backup-box">
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Guarda toda tu información en un archivo.</p>
+        <button class="btn btn-backup" style="width:150px; margin:0 auto;" onclick="exportarJSON()"><i class="fa-solid fa-download"></i> Descargar</button>
+      </div>
+      <div class="backup-box">
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Restaura desde un respaldo previo.</p>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+        <button class="btn btn-save" style="width:150px; margin:0 auto;" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-upload"></i> Cargar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ==========================================
+     1. GESTIÓN DE TEMA (CLARO / OSCURO)
+     ========================================== */
+  function initTheme() {
+    const savedTheme = localStorage.getItem('protekta_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeButtonIcon(savedTheme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('protekta_theme', newTheme);
+    updateThemeButtonIcon(newTheme);
+  }
+
+  function updateThemeButtonIcon(theme) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (theme === 'dark') {
+      btn.innerHTML = '<i class="fa-solid fa-sun"></i> Claro';
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-moon"></i> Oscuro';
+    }
+  }
+
+  /* ==========================================
+     2. CATÁLOGO OFICIAL 43 OPCIONES (EXCEL)
+     ========================================== */
+  const CATALOG_VERSION = "v5_2026";
+  
+  const defaultCatalog = [
+    { desc: "Cámara Wi-Fi / Inalámbrica — Instalación por cámara", price: 300.0 },
+    { desc: "Cámara Analógica / CCTV — Instalación por punto", price: 475.0 },
+    { desc: "Cámara IP / PoE — Instalación por punto", price: 625.0 },
+    { desc: "Montaje y configuración de DVR / NVR + Disco Duro", price: 450.0 },
+    { desc: "Configuración de monitoreo móvil — App / P2P", price: 300.0 },
+    { desc: "Kit de 2 a 4 cámaras — Mano de obra", price: 1850.0 },
+    { desc: "Kit de 8 cámaras — Mano de obra", price: 4000.0 },
+    { desc: "Kit de 16 cámaras — Mano de obra", price: 8000.0 },
+    { desc: "Canalización / Tubería — Por metro lineal", price: 45.0 },
+    { desc: "Apagador inteligente — Instalación estándar con neutro", price: 225.0 },
+    { desc: "Apagador inteligente — Instalación con paso de neutro", price: 350.0 },
+    { desc: "Apagador inteligente — Instalación de capacitor sin neutro", price: 275.0 },
+    { desc: "Vinculación a Alexa — Configuración general", price: 225.0 },
+    { desc: "Rutinas avanzadas / Escenas de domótica", price: 150.0 },
+    { desc: "Paquete 3 a 5 apagadores + Alexa", price: 1100.0 },
+    { desc: "Paquete 6 a 10 apagadores + Alexa", price: 2150.0 },
+    { desc: "Apagadores inteligentes de 3 vías — Par", price: 400.0 },
+    { desc: "Timbre inteligente a batería — Instalación", price: 325.0 },
+    { desc: "Timbre inteligente cableado — Instalación", price: 550.0 },
+    { desc: "Instalación de transformador / fuente de poder desde cero", price: 750.0 },
+    { desc: "Sincronización de timbre con Alexa / Google Home", price: 200.0 },
+    { desc: "Instalación de campana interior / Chime", price: 150.0 },
+    { desc: "Timbre inteligente — Servicio estándar", price: 500.0 },
+    { desc: "Timbre inteligente — Servicio completo con cableado", price: 1000.0 },
+    { desc: "Chapa inteligente — Reemplazo directo / sobrepuesto", price: 475.0 },
+    { desc: "Chapa inteligente — Modificación / perforación nueva", price: 900.0 },
+    { desc: "Chapa inteligente — Puerta aluminio / cristal / blindada", price: 1300.0 },
+    { desc: "Configuración básica de usuarios — App / huellas / códigos / RFID", price: 275.0 },
+    { desc: "Integración domótica de chapa — Hub + Alexa / Google Home", price: 250.0 },
+    { desc: "Chapa inteligente — Servicio estándar + configuración", price: 750.0 },
+    { desc: "Chapa inteligente — Servicio completo + integración Wi-Fi/Alexa", price: 1300.0 },
+    { desc: "Alarma inalámbrica RF / Wi-Fi / GSM — Servicio básico", price: 850.0 },
+    { desc: "Alarma cableada / híbrida — Paquete base 4 a 6 zonas", price: 1850.0 },
+    { desc: "Sensor inalámbrico adicional — Por sensor", price: 115.0 },
+    { desc: "Sensor cableado adicional — Por punto", price: 275.0 },
+    { desc: "Programación de zonas y tiempos de entrada / salida", price: 400.0 },
+    { desc: "Configuración de comunicador IP / Wi-Fi / 4G-LTE", price: 450.0 },
+    { desc: "Integración de alarma con Alexa / Google Home", price: 275.0 },
+    { desc: "Alarma casa / local pequeño — Panel + teclado + 3 a 4 sensores", price: 1100.0 },
+    { desc: "Alarma negocio mediano cableada — 6 a 8 sensores + sirena", price: 2500.0 },
+    { desc: "Proyecto comercial grande — Más de 10 zonas / ingeniería", price: 5250.0 },
+    { desc: "Barreras infrarrojas — Instalación por par", price: 600.0 },
+    { desc: "Canalización / Tubería para alarma — Por metro lineal", price: 50.0 }
+  ];
+
+  let savedVersion = localStorage.getItem('protekta_cat_version');
+  let catalog = JSON.parse(localStorage.getItem('protekta_catalog'));
+  
+  if (!catalog || savedVersion !== CATALOG_VERSION) {
+    catalog = defaultCatalog;
+    localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+    localStorage.setItem('protekta_cat_version', CATALOG_VERSION);
+  }
+
+  let currentQuoteId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    document.getElementById('quoteDate').valueAsDate = new Date();
+    actualizarFolioDinamico();
+    if(document.querySelectorAll('.item-card').length === 0) {
+      addRow();
+    }
+  });
+
+  /* ==========================================
+     3. GENERADOR DE FOLIO (NombreCliente-COTIZACION-DiaMes)
+     ========================================== */
+  function generarFolioPersonalizado() {
+    const rawName = document.getElementById('clientName').value.trim();
+    const clientSlug = rawName ? rawName.replace(/[^a-zA-Z0-9]/g, '') : "ClienteGeneral";
+    
+    const dateVal = document.getElementById('quoteDate').value;
+    let diaMesStr = "SinFecha";
+    if (dateVal) {
+      const parts = dateVal.split('-'); // YYYY-MM-DD
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parts[2];
+        const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        const mesStr = meses[monthIndex] || parts[1];
+        diaMesStr = `${day}${mesStr}`;
+      }
+    } else {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+      diaMesStr = `${day}${meses[now.getMonth()]}`;
+    }
+
+    return `${clientSlug}-COTIZACION-${diaMesStr}`;
+  }
+
+  function actualizarFolioDinamico() {
+    if (!currentQuoteId || currentQuoteId.includes('COTIZACION') === false) {
+      currentQuoteId = generarFolioPersonalizado();
+    }
+    document.getElementById('quoteFolioDisplay').textContent = `Folio: #${currentQuoteId}`;
+  }
+
+  /* ==========================================
+     4. GESTIÓN DE CONCEPTOS Y TARJETAS
+     ========================================== */
+  function addRow(descVal = '', priceVal = 0, qtyVal = 1) {
+    const container = document.getElementById('mobileItemsContainer');
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    
+    let optionsHtml = '<option value="">-- Seleccionar producto / servicio --</option>';
+    catalog.forEach(item => {
+      const selected = item.desc === descVal ? 'selected' : '';
+      optionsHtml += `<option value="${item.desc}" data-price="${item.price}" ${selected}>${item.desc} ($${item.price.toFixed(2)})</option>`;
+    });
+
+    card.innerHTML = `
+      <select class="catalog-select" onchange="onCatalogSelect(this)">
+        ${optionsHtml}
+      </select>
+      <input type="text" placeholder="Descripción libre del concepto" class="desc" value="${descVal}">
+      <div class="item-grid-calc">
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Cant</label>
+          <input type="number" value="${qtyVal}" min="1" class="qty" oninput="calculateTotals()">
+        </div>
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Precio ($)</label>
+          <input type="number" value="${priceVal}" min="0" step="0.01" class="price" oninput="calculateTotals()">
+        </div>
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Total</label>
+          <div class="item-total-text amount">$0.00</div>
+        </div>
+        <button class="btn-remove-card" onclick="removeCard(this)"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `;
+    container.appendChild(card);
+    calculateTotals();
+  }
+
+  function onCatalogSelect(selectElement) {
+    const card = selectElement.closest('.item-card');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const descInput = card.querySelector('.desc');
+    const priceInput = card.querySelector('.price');
+
+    if (selectElement.value) {
+      descInput.value = selectElement.value;
+      priceInput.value = selectedOption.getAttribute('data-price');
+      calculateTotals();
+    }
+  }
+
+  function removeCard(button) {
+    const card = button.closest('.item-card');
+    if (document.querySelectorAll('.item-card').length > 1) {
+      card.remove();
+      calculateTotals();
+    }
+  }
+
+  function calculateTotals() {
+    const cards = document.querySelectorAll('.item-card');
+    let subtotal = 0;
+
+    cards.forEach(card => {
+      const qty = parseFloat(card.querySelector('.qty').value) || 0;
+      const price = parseFloat(card.querySelector('.price').value) || 0;
+      const amount = qty * price;
+      
+      card.querySelector('.amount').textContent = `$${amount.toFixed(2)}`;
+      subtotal += amount;
+    });
+
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+
+    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('taxAmount').textContent = `$${taxAmount.toFixed(2)}`;
+    document.getElementById('totalFinal').textContent = `$${total.toFixed(2)}`;
+  }
+
+  /* ==========================================
+     5. MODALES Y FUNCIONALIDADES
+     ========================================== */
+  function abrirCatalogo() { document.getElementById('catalogModal').style.display = 'flex'; renderList(); }
+  function cerrarCatalogo() { document.getElementById('catalogModal').style.display = 'none'; actualizarSelects(); }
+  function abrirHistorial() { document.getElementById('historyModal').style.display = 'flex'; renderHistory(); }
+  function cerrarHistorial() { document.getElementById('historyModal').style.display = 'none'; }
+  function abrirRespaldoModal() { document.getElementById('backupModal').style.display = 'flex'; }
+  function cerrarRespaldoModal() { document.getElementById('backupModal').style.display = 'none'; }
+
+  function renderList() {
+    const c = document.getElementById('catalogListContainer');
+    c.innerHTML = '';
+    catalog.forEach((item, idx) => {
+      c.innerHTML += `
+        <div class="list-item-card">
+          <div><strong>${item.desc}</strong><br><span style="color:var(--success); font-weight:700;">$${item.price.toFixed(2)}</span></div>
+          <button class="btn-remove-card" onclick="delCat(${idx})"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
+    });
+  }
+
+  function agregarAlCatalogo() {
+    const desc = document.getElementById('newCatDesc').value.trim();
+    const price = parseFloat(document.getElementById('newCatPrice').value);
+    if(!desc || isNaN(price)) return alert("Por favor ingresa nombre y precio válidos");
+    catalog.push({ desc, price });
+    localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+    document.getElementById('newCatDesc').value = '';
+    document.getElementById('newCatPrice').value = '';
+    renderList();
+  }
+
+  function delCat(idx) {
+    catalog.splice(idx, 1);
+    localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+    renderList();
+  }
+
+  function actualizarSelects() {
+    document.querySelectorAll('.catalog-select').forEach(sel => {
+      const val = sel.value;
+      let opts = '<option value="">-- Seleccionar producto / servicio --</option>';
+      catalog.forEach(item => { opts += `<option value="${item.desc}" data-price="${item.price}">${item.desc} ($${item.price.toFixed(2)})</option>`; });
+      sel.innerHTML = opts;
+      sel.value = val;
+    });
+  }
+
+  function guardarCotizacion() {
+    const clientName = document.getElementById('clientName').value.trim() || "ClienteGeneral";
+    const clientPhone = document.getElementById('clientPhone').value.trim();
+    const quoteDate = document.getElementById('quoteDate').value;
+    const taxRate = document.getElementById('taxRate').value;
+    
+    currentQuoteId = generarFolioPersonalizado();
+
+    let items = [];
+    document.querySelectorAll('.item-card').forEach(card => {
+      items.push({
+        desc: card.querySelector('.desc').value,
+        qty: card.querySelector('.qty').value,
+        price: card.querySelector('.price').value
+      });
+    });
+
+    const totalFinal = document.getElementById('totalFinal').textContent;
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    
+    const data = { id: currentQuoteId, clientName, clientPhone, quoteDate, taxRate, items, totalFinal };
+    const idx = quotes.findIndex(q => q.id === currentQuoteId);
+    if(idx >= 0) quotes[idx] = data; else quotes.push(data);
+
+    localStorage.setItem('protekta_quotes', JSON.stringify(quotes));
+    document.getElementById('quoteFolioDisplay').textContent = `Folio: #${currentQuoteId}`;
+    alert(`¡Guardado con éxito!\nFolio: #${currentQuoteId}`);
+  }
+
+  function renderHistory() {
+    const c = document.getElementById('historyListContainer');
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    if(quotes.length === 0) { c.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:15px;">Sin cotizaciones guardadas</p>'; return; }
+    c.innerHTML = '';
+    quotes.forEach(q => {
+      c.innerHTML += `
+        <div class="list-item-card">
+          <div><strong>#${q.id}</strong><br><small>${q.quoteDate} | ${q.totalFinal}</small></div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-add-new" style="padding:6px 10px;" onclick="loadQuote('${q.id}')"><i class="fa-solid fa-folder-open"></i></button>
+            <button class="btn-remove-card" onclick="delQuote('${q.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>`;
+    });
+  }
+
+  function loadQuote(id) {
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    const q = quotes.find(item => item.id === id);
+    if(!q) return;
+    currentQuoteId = q.id;
+    document.getElementById('quoteFolioDisplay').textContent = `Folio: #${q.id}`;
+    document.getElementById('clientName').value = q.clientName;
+    document.getElementById('clientPhone').value = q.clientPhone;
+    document.getElementById('quoteDate').value = q.quoteDate;
+    document.getElementById('taxRate').value = q.taxRate;
+    
+    const container = document.getElementById('mobileItemsContainer');
+    container.innerHTML = '';
+    q.items.forEach(i => addRow(i.desc, parseFloat(i.price), parseInt(i.qty)));
+    cerrarHistorial();
+  }
+
+  function delQuote(id) {
+    if(!confirm("¿Eliminar cotización?")) return;
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    quotes = quotes.filter(q => q.id !== id);
+    localStorage.setItem('protekta_quotes', JSON.stringify(quotes));
+    renderHistory();
+  }
+
+  function nuevaCotizacion() {
+    if(confirm("¿Iniciar nueva cotización?")) {
+      currentQuoteId = null;
+      document.getElementById('clientName').value = '';
+      document.getElementById('clientPhone').value = '';
+      document.getElementById('quoteDate').valueAsDate = new Date();
+      actualizarFolioDinamico();
+      document.getElementById('mobileItemsContainer').innerHTML = '';
+      addRow();
+    }
+  }
+
+  function imprimirCotizacion() {
+    // Actualiza el folio con el nombre y fecha actual antes de imprimir/generar PDF
+    actualizarFolioDinamico();
+    window.print();
+  }
+
+  function exportarExcel() {
+    const folioName = generarFolioPersonalizado();
+    const client = document.getElementById('clientName').value || "Cliente";
+    let ws_data = [["PROTEKTA - PRESUPUESTO OFICIAL"], [], ["Folio:", folioName], ["Cliente:", client], [], ["Concepto", "Cant", "P. Unit", "Total"]];
+    let sub = 0;
+    document.querySelectorAll('.item-card').forEach(card => {
+      const desc = card.querySelector('.desc').value;
+      const qty = parseFloat(card.querySelector('.qty').value) || 0;
+      const price = parseFloat(card.querySelector('.price').value) || 0;
+      const amt = qty * price;
+      sub += amt;
+      ws_data.push([desc, qty, price, amt]);
+    });
+    const tax = sub * ((parseFloat(document.getElementById('taxRate').value) || 0) / 100);
+    ws_data.push([], ["", "", "Subtotal:", sub], ["", "", "IVA:", tax], ["", "", "Total:", sub + tax]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), "Cotizacion");
+    XLSX.writeFile(wb, `${folioName}.xlsx`);
+  }
+
+  function exportarJSON() {
+    const data = { catalog, quotes: JSON.parse(localStorage.getItem('protekta_quotes')) || [] };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Protekta_Respaldo.json`; a.click();
+  }
+
+  function importarJSON(e) {
+    const reader = new FileReader();
+    if(e.target.files[0]) {
+      reader.readAsText(e.target.files[0], "UTF-8");
+      reader.onload = function(evt) {
+        try {
+          const res = JSON.parse(evt.target.result);
+          if(res.catalog) {
+            catalog = res.catalog;
+            localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+            localStorage.setItem('protekta_quotes', JSON.stringify(res.quotes));
+            actualizarSelects();
+            alert("¡Restaurado con éxito!");
+            cerrarRespaldoModal();
+          }
+        } catch(err) { alert("Archivo inválido"); }
+      };
+    }
+  }
+
+  function enviarWhatsApp() {
+    const client = document.getElementById('clientName').value || "Cliente";
+    const total = document.getElementById('totalFinal').textContent;
+    let msg = `Hola *${client}*, presupuesto oficial *PROTEKTA*:\n\n`;
+    document.querySelectorAll('.item-card').forEach(card => {
+      const desc = card.querySelector('.desc').value;
+      const qty = card.querySelector('.qty').value;
+      const amt = card.querySelector('.amount').textContent;
+      if(desc) msg += `• ${qty}x ${desc} - *${amt}*\n`;
+    });
+    msg += `\n*Total (IVA incl): ${total}*\n\n_¡Gracias por su preferencia!_`;
+    const phone = document.getElementById('clientPhone').value.replace(/\D/g,'');
+    window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank');
+  }
+</script>
+
+</body>
+</html>
