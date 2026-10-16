@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cotizador Móvil - PROTEKTA</title>
-  <link rel="icon" type="image/png" href="imagen/icono.png">
+  <link rel="icon" type="image/png" id="faviconTag" href="imagen/logo.jpg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- SheetJS para exportar a Excel -->
@@ -310,7 +310,7 @@
   <!-- Encabezado con Logotipo Local -->
   <div class="brand-header">
     <div class="logo-container">
-      <img src="imagen/icono.png" alt="Logo PROTEKTA" class="logo-img" onerror="this.src='https://via.placeholder.com/150x50?text=PROTEKTA'">
+      <img src="imagen/logo.jpg" alt="Logo PROTEKTA" class="logo-img" id="mainLogoImg" onerror="verificarLogo(this)">
       <div class="brand-info">
         <h1>PROTEKTA</h1>
         <p>Sistemas de Seguridad & Smart Home</p>
@@ -421,6 +421,27 @@
 </div>
 
 <script>
+  /* ==========================================
+     0. MANEJADOR INTELIGENTE DE LOGOTIPO
+     ========================================== */
+  let logoIntento = 0;
+  function verificarLogo(imgElement) {
+    logoIntento++;
+    if (logoIntento === 1) {
+      // Intenta con extensión .jpeg
+      imgElement.src = "imagen/logo.jpeg";
+    } else if (logoIntento === 2) {
+      // Intenta con extensión .png
+      imgElement.src = "imagen/logo.png";
+    } else if (logoIntento === 3) {
+      // Intenta con 'icono.png' por compatibilidad anterior
+      imgElement.src = "imagen/icono.png";
+    } else {
+      // Respaldo final en línea si la ruta local no se encuentra
+      imgElement.src = 'https://via.placeholder.com/150x50?text=PROTEKTA';
+    }
+  }
+
   /* ==========================================
      1. GESTIÓN DE TEMA (CLARO / OSCURO)
      ========================================== */
@@ -769,7 +790,6 @@
   }
 
   function imprimirCotizacion() {
-    // Actualiza el folio con el nombre y fecha actual antes de imprimir/generar PDF
     actualizarFolioDinamico();
     window.print();
   }
